@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Switch User</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='semantic.min.css') }}">
+</head>
+<body>
+
+    <h1>Switch User</h1>
+
+    <div class="ui list">
+        {% for user in users %}
+            <div class="item">
+                <img class="ui avatar image" src="{{ user.icon_url }}" alt="User Icon">
+                <div class="content">
+                    <a class="header" href="{{ url_for('switch_to_user', id=user.id) }}">{{ user.username }}</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

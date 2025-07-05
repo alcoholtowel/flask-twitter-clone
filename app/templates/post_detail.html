@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Post Detail</title>
+</head>
+<body>
+    <h1>{{ post.text }}</h1>
+    <p>Author: {{ post.author.username }}</p>
+    <p>Date: {{ post.created_at }}</p>
+
+    <h2>Related Posts</h2>
+    <ul>
+        {% for related_post in same_tree_posts %}
+            <li>
+                <a href="{{ url_for('post_detail', post_id=related_post.id) }}">{{ related_post.text }}</a>
+                <p>By: {{ related_post.author.username }}</p>
+                <p>Date: {{ related_post.created_at }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>

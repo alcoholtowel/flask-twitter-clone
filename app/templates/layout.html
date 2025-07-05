@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twiner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/semantic.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/semantic.min.js') }}"></script>
+</head>
+<body>
+    <div class="ui container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
