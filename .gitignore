@@ -1,0 +1,14 @@
+# ignore .db
+*.db
+
+# ignore pycache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+#デバッグモードを共有しないように
+run.py
+
+# Environment variables
+.env

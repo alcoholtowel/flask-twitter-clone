@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twiner</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="{{ url_for('static', filename='js/jquery-3.7.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/semantic.min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/semantic.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}">
+
+    <script>
+    $(document).ready(function() {
+        $('.add-reply-button').on('click', function() {
+        // 他のフォームを隠す
+        $('.reply-form').remove();
+
+        //親になる予定のIDをもらってくる
+        var parentId = $(this).data('parent-id');
+
+        var postContainer = $(this).closest('.post');
+        var urlForCreatePost = "{{ url_for('add_reply') }}";
+        // フォームのHTMLコード
+        var formHtml = '<div class="ui form reply-form" style="margin-top: 10px;">' +
+                        '<form action="' + urlForCreatePost + '" method="post">' +
+                            '<input type="hidden" name="parent_id" value="' + parentId + '">' +
+                        '<div class="field">' +
+                            '<textarea name="reply_text"></textarea>' +
+                        '</div>' +
+                        '<button type="submit" class="ui blue button">Reply</button>' +
+                        '</form>' +
+                        '</div>';
+
+        // 対応する投稿の .reply-container にフォームを挿入
+        postContainer.find('.reply-container').first().html(formHtml);
+
+        // フォームが表示される場所までスクロール
+        $('html, body').animate({
+            scrollTop: postContainer.find('.reply-container').offset().top
+        }, 200);
+    });
+});
+
+
+     // ボタンがクリックされた時にフォームを送信するためのイベントリスナー
+    $('.delete').on('click', function(e) {
+    e.preventDefault();
+    var postId = $(this).data('post-id');
+    $('#delete-form-' + postId).submit();
+    });
+    
+    function confirmDelete(postId) {
+    if (confirm('本当にこの投稿を削除しますか？')) {
+        // 確認後、フォームを送信
+        document.getElementById('delete-form-' + postId).submit();
+    }
+}
+
+      </script>
+</head>
+<body>
+
+    {% extends 'side_menu.html' %}
+
+{% block content %}
+
+
+    <div class="index content">
+        <h1>Welcome to Twiner</h1>
+    <!-- フラッシュメッセージを表示するセクション -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="ui container">
+        {% for message in messages %}
+        <div class="ui positive message">
+            <i class="close icon"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- 新規投稿フォーム -->
+    <form action="{{ url_for('create_post') }}" method="post" class="ui form">
+        <div class="ui form">
+            <div class="field">
+              <textarea name="text" placeholder="What's happening?" required></textarea>
+            </div>
+          </div>  
+        <button type="submit" class="ui primary button">Post</button>
+    </form>
+    </div>
+    </div>
+</div>
+
+<!-- classをindex contentにすることで左寄せにする -->
+<div class="index content">
+
+    <!-- 個別ポスト画面 -->
+    {% for post in posts %}
+    <div class="post {% if post.tree_position == 0 %}class-for-zero{% else %}class-for-others{% endif %}" data-tree-id="{{post.tree_id}}" data-tree-position="{{post.tree_position}}">
+      <div class="post-header">
+
+        <a href="{{ url_for('user_profile', username=post.author.username) }}">
+        <img class="profile-pic" src="{{ url_for('static', filename='uploads/' + post.author.icon_url) }}" alt="ユーザーのプロフィール画像">
+        </a>
+
+        <div class="user-info">
+          <span class="username"><a href="{{ url_for('user_profile', username=post.author.username) }}">{{ post.author.username }}</a></span>
+
+        </div>
+      </div>
+
+        <div class="post-content">
+            {{ post.text | nl2br }}
+        </div>
+        
+        <div class="post-info">
+            <ul>
+                <li>
+                    {% if post.tree_position == 0 and post.has_children %}
+                    <a href="javascript:void(0);" class="toggle-button lsf-icon etc" data-tree-id="{{post.tree_id}}" title="Toggle"></a>
+                    {% endif %}
+                </li>
+
+                <li> 
+                    <a href="{{ url_for('edit_post', post_id=post.id) }}" class="lsf-icon edit" title="Edit"></a>
+                </li>
+                
+                <!-- 削除ボタンのためのフォーム -->
+                <form id="delete-form-{{ post.id }}" action="{{ url_for('delete_post', post_id=post.id) }}" method="post" style="display: none;">
+                </form>
+                <!-- 削除ボタンのリンク -->
+                <li>
+                    <a href="javascript:void(0);" onclick="confirmDelete('{{ post.id }}');" class="lsf-icon delete" title="Delete"></a>
+                </li>
+                <!-- リプライ機能 -->
+                <!-- フォームにツリー元の親ポスト(になる今のポスト)を送る、後で親ポストのTree_idを取得すればよい -->
+                <li>
+                    <a href="javascript:void(0);" class="lsf-icon notify add-reply-button" title="Notify" data-parent-id="{{ post.id }}"></a>
+                </li> 
+            </ul>
+            
+            <span class="post-time">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            
+        </div>
+        <div class="reply-container"></div>
+    </div>
+    {% endfor %}
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+          {% if pagination.has_prev %}
+          <li class="page-item"><a class="page-link lsf-icon back" href="{{ url_for('index', page=pagination.prev_num) }}"></a></li>
+          {% else %}
+          <li class="page-item disabled  lsf-icon back"><span class="page-link"></span></li>
+          {% endif %}
+      
+          {% for p in pagination.iter_pages() %}
+            {% if p %}
+              {% if p != pagination.page %}
+              <li class="page-item"><a class="page-link" href="{{ url_for('index', page=p) }}">{{ p }}</a></li>
+              {% else %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+              {% endif %}
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+          {% endfor %}
+      
+          {% if pagination.has_next %}
+          <li class="page-item"><a class="page-link lsf-icon next" href="{{ url_for('index', page=pagination.next_num) }}"></a></li>
+          {% else %}
+          <li class="page-item disabled lsf-icon next"><span class="page-link"></span></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+</div>
+
+    {% endblock %}
+</body>
+
+</html>
